@@ -1,5 +1,4 @@
 
-
 const routes = [
   {
     path: '/',
@@ -15,12 +14,12 @@ const routes = [
     path: '/register',
     component: () => import('pages/RegisterPage.vue'),
   },
-   {
+  {
     path: '/pokemonList',
     component: () => import('pages/PokemonList.vue'),
   },
 
-   {
+  {
     path: '/afegir',
     component: () => import('pages/AfegirPokemon.vue'),
   },

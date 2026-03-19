@@ -14,7 +14,7 @@
       <q-list>
         <q-item-label header> Menú de Navegación </q-item-label>
 
-        <q-item clickable v-ripple to="/" exact>
+        <q-item clickable v-ripple to="/pokemonList" exact>
           <q-item-section avatar>
             <q-icon name="pets" /> </q-item-section>
           <q-item-section>
