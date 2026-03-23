@@ -47,43 +47,43 @@ const password = ref('')
 
 const router = useRouter()
 const $q = useQuasar()
-
 const iniciarSesion = async () => {
-    console.log("Boton pulsado")
+    // Validamos antes de enviar
     if (!email.value || !password.value) {
-        alert('Rellena todos los campos' )
-        return
+        $q.notify({ type: 'warning', message: 'Falten camps per introduir' });
+        return;
     }
 
     try {
-
-        const response = await fetch('http://localhost:3000/auth/login', {
+        const response = await fetch('http://172.23.7.113:3000/auth/login', {
             method: 'POST',
             headers: {
+                'Accept': 'application/json', // Añadimos esto
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                email: email.value,
-                password: password.value
+                email: email.value.trim(),     // .trim() por si hay espacios
+                password: password.value.trim()
             })
-        })
+        });
 
+        const data = await response.json();
 
         if (!response.ok) {
-            throw new Error('Credenciales incorrectas')
+            // Si Nuxt devuelve error 400, lanzamos el mensaje que viene del servidor
+            throw new Error(data.message || 'Error en las credenciales');
         }
 
-        const data = await response.json()
-        console.log('Usuario logueado:', data)
-
-        $q.notify({ type: 'positive', message: '¡Login correcto!' })
-
-
-        router.push('/pokemonList')
+        $q.notify({ type: 'positive', message: '¡Login correcto!' });
+        router.push('/pokemonList');
 
     } catch (error) {
-        console.error('Error en el login:', error)
-        $q.notify({ type: 'negative', message: error.message })
+        console.error('Error en el login:', error);
+        // Ahora $q.notify funcionará porque lo activamos en quasar.config.js
+        $q.notify({ 
+            type: 'negative', 
+            message: error.message || 'Error de connexió' 
+        });
     }
 }
 </script>

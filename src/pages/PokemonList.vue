@@ -61,16 +61,51 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
+import { useQuasar } from 'quasar';
 
-const pokemons = ref([
-  { generacion: 1, nombre: 'Bulbasaur', tipo: 'Planta', imagen: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/1.png' },
-  { generacion: 1, nombre: 'Charmander', tipo: 'Fuego', imagen: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/4.png' },
-  { generacion: 1, nombre: 'Squirtle', tipo: 'Agua', imagen: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/7.png' },
-  { generacion: 2, nombre: 'Chikorita', tipo: 'Planta', imagen: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/152.png' },
-  { generacion: 3, nombre: 'Mudkip', tipo: 'Agua', imagen: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/258.png' },
-  { generacion: 4, nombre: 'Lucario', tipo: 'Lucha', imagen: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/448.png' }
-]);
+const $q = useQuasar();
+const pokemons = ref([]); // Empezamos con la lista vacía
+
+const obtenerPokemons = async () => {
+  // Mostramos un spinner de carga
+  $q.loading.show({ message: 'Cargando tu Pokédex...' });
+
+  try {
+    // IMPORTANTE: Usa la misma IP que te funcionó en el login
+    const response = await fetch('http://172.23.7.113:3000/api/pokemons', {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error('No se pudo obtener la lista de Pokémon');
+    }
+
+    const data = await response.json();
+    
+    // Asignamos los datos que vienen de Nuxt a nuestra variable reactiva
+    // Asegúrate de que Nuxt devuelva un array (o ajusta a data.pokemons si es un objeto)
+    pokemons.value = data; 
+
+  } catch (error) {
+    console.error('Error al cargar pokemons:', error);
+    $q.notify({
+      type: 'negative',
+      message: 'Error al conectar con la base de datos'
+    });
+  } finally {
+    $q.loading.hide();
+  }
+};
+
+// Ejecutamos la función automáticamente al entrar en la página
+onMounted(() => {
+  obtenerPokemons();
+});
 </script>
 
 <style scoped>
