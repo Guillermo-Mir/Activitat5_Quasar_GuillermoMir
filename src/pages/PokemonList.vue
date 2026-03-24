@@ -11,41 +11,40 @@
     <q-page-container>
       <q-page class="q-pa-sm bg-grey-2">
         
-        <h5>PokemonList</h5>
+        <h5 class="q-ml-sm text-weight-bold text-dark">Mis Pokémon</h5>
 
         <div class="row q-col-gutter-y-sm">
           
           <div 
             class="col-12" 
             v-for="(pokemon, index) in pokemons" 
-            :key="index"
+            :key="pokemon.id || index"
           >
             <q-card class="my-card hover-shadow" v-ripple>
               
               <div class="row items-center no-wrap q-pa-sm">
                 
                 <div class="col-auto">
-                  <q-avatar size="60px" square class="bg-white rounded-borders">
-                    <q-img :src="pokemon.imagen" style="object-fit: contain;" />
+                  <q-avatar size="60px" square class="bg-primary text-white rounded-borders text-h5 text-weight-bold">
+                    {{ pokemon.name ? pokemon.name.charAt(0).toUpperCase() : '?' }}
                   </q-avatar>
                 </div>
 
                 <div class="col q-ml-md">
                   <div class="text-subtitle1 text-weight-bold text-dark q-ma-none leading-none">
-                    {{ pokemon.nombre }}
+                    {{ pokemon.name }}
                   </div>
-                  <div class="text-caption text-grey-7">Generación {{ pokemon.generacion }}</div>
+                  <div class="text-caption text-grey-7">Generación {{ pokemon.generation }}</div>
                 </div>
 
                 <div class="col-auto q-mr-sm">
                   <q-chip color="secondary" text-color="white" size="sm" dense>
-                    {{ pokemon.tipo }}
+                    {{ pokemon.type }}
                   </q-chip>
                 </div>
 
                 <div class="col-auto row no-wrap">
                   <q-btn flat round dense color="primary" icon="edit" class="q-mr-xs" />
-                  
                   <q-btn flat round dense color="negative" icon="delete" />
                 </div>
 
@@ -53,6 +52,11 @@
             </q-card>
           </div>
 
+        </div>
+
+        <div v-if="pokemons.length === 0" class="text-center q-mt-xl text-grey-6">
+          <q-icon name="pets" size="4xl" class="q-mb-sm" />
+          <p>Aún no tienes ningún Pokémon. ¡Añade el primero!</p>
         </div>
 
       </q-page>
@@ -68,35 +72,27 @@ const $q = useQuasar();
 const pokemons = ref([]); // Empezamos con la lista vacía
 
 const obtenerPokemons = async () => {
-  // Mostramos un spinner de carga
   $q.loading.show({ message: 'Cargando tu Pokédex...' });
 
   try {
-    // IMPORTANTE: Usa la misma IP que te funcionó en el login
-    const response = await fetch('http://172.23.7.113:3000/api/pokemons', {
+    // Usamos la ruta relativa gracias al proxy de Quasar
+    const response = await fetch('/api/pokemons', {
       method: 'GET',
+      credentials: 'include', // Imprescindible para la sesión
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
       }
     });
 
-    if (!response.ok) {
-      throw new Error('No se pudo obtener la lista de Pokémon');
-    }
+    if (!response.ok) throw new Error(`Error ${response.status}`);
 
     const data = await response.json();
-    
-    // Asignamos los datos que vienen de Nuxt a nuestra variable reactiva
-    // Asegúrate de que Nuxt devuelva un array (o ajusta a data.pokemons si es un objeto)
-    pokemons.value = data; 
+    pokemons.value = data;
 
   } catch (error) {
-    console.error('Error al cargar pokemons:', error);
-    $q.notify({
-      type: 'negative',
-      message: 'Error al conectar con la base de datos'
-    });
+    console.error('Error:', error);
+    $q.notify({ type: 'negative', message: 'Fallo al cargar la lista de Pokémon' });
   } finally {
     $q.loading.hide();
   }

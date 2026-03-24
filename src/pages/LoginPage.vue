@@ -3,6 +3,7 @@
         <q-page-container>
 
             <q-page class="flex flex-center bg-grey-1 q-pa-md">
+
                 <q-card class="q-pa-lg shadow-2 rounded-borders" style="width: 100%; max-width: 350px;">
 
                     <div class="row q-mb-md">
@@ -20,7 +21,8 @@
                             </template>
                         </q-input>
 
-                        <q-input outlined v-model="password" type="password" label="Contraseña">
+                        <q-input outlined v-model="password" type="password" label="Contraseña"
+                            @keyup.enter="iniciarSesion">
                             <template v-slot:prepend>
                                 <q-icon name="lock" />
                             </template>
@@ -28,9 +30,12 @@
 
                         <q-btn color="dark" size="lg" class="full-width q-mt-md" label="Entrar" @click="iniciarSesion"
                             rounded unelevated />
+
+                        <q-btn flat color="primary" class="full-width q-mt-sm" label="Crear compte" to="/register" />
                     </div>
 
                 </q-card>
+
             </q-page>
 
         </q-page-container>
@@ -42,27 +47,28 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
 
-const email = ref('')
-const password = ref('')
+const email = ref('');
+const password = ref('');
 
-const router = useRouter()
-const $q = useQuasar()
+const router = useRouter();
+const $q = useQuasar();
+
 const iniciarSesion = async () => {
-    // Validamos antes de enviar
     if (!email.value || !password.value) {
         $q.notify({ type: 'warning', message: 'Falten camps per introduir' });
         return;
     }
 
     try {
-        const response = await fetch('http://172.23.7.113:3000/auth/login', {
+        const response = await fetch('/auth/login', {
             method: 'POST',
+            credentials: 'include', // Lo mantenemos para guardar las cookies de sesión
             headers: {
-                'Accept': 'application/json', // Añadimos esto
+                'Accept': 'application/json',
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                email: email.value.trim(),     // .trim() por si hay espacios
+                email: email.value.trim(),
                 password: password.value.trim()
             })
         });
@@ -70,19 +76,18 @@ const iniciarSesion = async () => {
         const data = await response.json();
 
         if (!response.ok) {
-            // Si Nuxt devuelve error 400, lanzamos el mensaje que viene del servidor
-            throw new Error(data.message || 'Error en las credenciales');
+            throw new Error(data.statusMessage || data.message || 'Error en les credencials');
         }
 
-        $q.notify({ type: 'positive', message: '¡Login correcto!' });
+        $q.notify({ type: 'positive', message: '¡Login correcte!' });
+
         router.push('/pokemonList');
 
     } catch (error) {
         console.error('Error en el login:', error);
-        // Ahora $q.notify funcionará porque lo activamos en quasar.config.js
-        $q.notify({ 
-            type: 'negative', 
-            message: error.message || 'Error de connexió' 
+        $q.notify({
+            type: 'negative',
+            message: error.message || 'Error de connexió al servidor'
         });
     }
 }
