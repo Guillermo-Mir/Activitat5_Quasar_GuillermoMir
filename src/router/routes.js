@@ -20,8 +20,16 @@ const routes = [
   },
 
   {
-    path: '/afegir',
-    component: () => import('pages/AfegirPokemon.vue'),
+    path: '/create',
+    component: () => import('pages/CreatePokemon.vue'),
+  },
+
+  { 
+    path: '/edit/:id', component: () => import('pages/EditPokemon.vue') 
+  },
+
+  { 
+    path: '/delete/:id', component: () => import('pages/DeletePokemon.vue') 
   },
 
 

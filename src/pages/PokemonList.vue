@@ -4,6 +4,11 @@
     <q-header elevated class="bg-primary text-white">
       <q-toolbar>
         <q-toolbar-title>Mi Pokédex (Lista)</q-toolbar-title>
+        
+        <q-btn flat round dense icon="add" to="/create" class="q-mr-sm">
+          <q-tooltip>Añadir Pokémon</q-tooltip>
+        </q-btn>
+
         <q-btn flat round dense icon="logout" to="/login" />
       </q-toolbar>
     </q-header>
@@ -21,7 +26,6 @@
             :key="pokemon.id || index"
           >
             <q-card class="my-card hover-shadow" v-ripple>
-              
               <div class="row items-center no-wrap q-pa-sm">
                 
                 <div class="col-auto">
@@ -44,20 +48,30 @@
                 </div>
 
                 <div class="col-auto row no-wrap">
-                  <q-btn flat round dense color="primary" icon="edit" class="q-mr-xs" />
-                  <q-btn flat round dense color="negative" icon="delete" />
+                  <q-btn 
+                    flat round dense color="primary" icon="edit" class="q-mr-xs"
+                    :to="`/edit/${pokemon.id}`"
+                  />
+                  <q-btn 
+                    flat round dense color="negative" icon="delete"
+                    :to="`/delete/${pokemon.id}`"
+                  />
                 </div>
 
               </div>
             </q-card>
           </div>
-
         </div>
 
         <div v-if="pokemons.length === 0" class="text-center q-mt-xl text-grey-6">
-          <q-icon name="pets" size="4xl" class="q-mb-sm" />
+          <q-icon name="pets" size="4rem" class="q-mb-sm" />
           <p>Aún no tienes ningún Pokémon. ¡Añade el primero!</p>
+          <q-btn color="primary" outline label="Añadir ahora" to="/create" icon="add" />
         </div>
+
+        <q-page-sticky position="bottom-right" :offset="[18, 18]">
+          <q-btn fab icon="add" color="primary" to="/create" />
+        </q-page-sticky>
 
       </q-page>
     </q-page-container>
@@ -69,19 +83,20 @@ import { ref, onMounted } from 'vue';
 import { useQuasar } from 'quasar';
 
 const $q = useQuasar();
-const pokemons = ref([]); // Empezamos con la lista vacía
+const pokemons = ref([]);
 
 const obtenerPokemons = async () => {
   $q.loading.show({ message: 'Cargando tu Pokédex...' });
 
   try {
-    // Usamos la ruta relativa gracias al proxy de Quasar
-    const response = await fetch('/api/pokemons', {
+    // Detectamos si es capacitor para usar la IP o ruta relativa
+    const baseUrl = $q.platform.is.capacitor ? 'http://172.23.7.113:3000' : '';
+
+    const response = await fetch(`${baseUrl}/api/pokemons`, {
       method: 'GET',
-      credentials: 'include', // Imprescindible para la sesión
+      credentials: 'include',
       headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
+        'Accept': 'application/json'
       }
     });
 
@@ -92,26 +107,19 @@ const obtenerPokemons = async () => {
 
   } catch (error) {
     console.error('Error:', error);
-    $q.notify({ type: 'negative', message: 'Fallo al cargar la lista de Pokémon' });
+    $q.notify({ type: 'negative', message: 'Fallo al cargar la lista' });
   } finally {
     $q.loading.hide();
   }
 };
 
-// Ejecutamos la función automáticamente al entrar en la página
 onMounted(() => {
   obtenerPokemons();
 });
 </script>
 
 <style scoped>
-.hover-shadow {
-  transition: box-shadow 0.3s ease-in-out;
-}
-.hover-shadow:hover {
-  box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
-}
-.leading-none {
-  line-height: 1.2;
-}
+.hover-shadow { transition: box-shadow 0.3s ease-in-out; }
+.hover-shadow:hover { box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important; }
+.leading-none { line-height: 1.2; }
 </style>
