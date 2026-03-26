@@ -38,6 +38,7 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
+import { api } from 'src/boot/axios';
 
 const nom = ref('');
 const email = ref('');
@@ -49,34 +50,26 @@ const registrar = async () => {
   $q.loading.show({ message: 'Creant compte...' });
 
   try {
-    const baseUrl = $q.platform.is.capacitor ? 'http://172.23.7.113:3000' : '';
-    
-    const response = await fetch(`${baseUrl}/auth/register`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        name: nom.value.trim(),
-        email: email.value.trim(),
-        password: password.value.trim()
-      })
+    const response = await api.post('/auth/register', {
+      name: nom.value.trim(),
+      email: email.value.trim(),
+      password: password.value.trim()
     });
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.statusMessage || data.message || 'Error al crear la compte');
+    if (response.data && response.data.token) {
+      const token = response.data.token;
+      localStorage.setItem('auth_token', token);
+      
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     }
 
     $q.notify({ type: 'positive', message: '¡Compte creat correctament!' });
     router.push('/pokemonList');
 
-  } catch (error) {
-    console.error('Error en el registro:', error);
-    $q.notify({ type: 'negative', message: error.message || 'Error de connexió' });
+  } catch (err) {
+    console.error('Error en el registro:', err);
+    const mensaje = err.response?.data?.statusMessage || 'Error al crear la compte';
+    $q.notify({ type: 'negative', message: mensaje });
   } finally {
     $q.loading.hide();
   }

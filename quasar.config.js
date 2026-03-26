@@ -11,7 +11,9 @@ export default defineConfig((/* ctx */) => {
     // app boot file (/src/boot)
     // --> boot files are part of "main.js"
     // https://v2.quasar.dev/quasar-cli-vite/boot-files
-    boot: [],
+    boot: [
+      'axios',
+    ],
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-file#css
     css: ['app.scss'],
@@ -72,10 +74,10 @@ export default defineConfig((/* ctx */) => {
 
     // Full list of options: https://v2.quasar.dev/quasar-cli-vite/quasar-config-file#devserver
     devServer: {
-      
+
       proxy: {
         '/auth': {
-          target: 'http://172.23.7.113:3000', 
+          target: 'http://172.23.7.113:3000',
           changeOrigin: true
         },
         '/api': {
@@ -101,7 +103,8 @@ export default defineConfig((/* ctx */) => {
       // Quasar plugins
       plugins: [
         'Notify',
-        'Loading'
+        'Loading',
+        'Dialog' // <--- Afegeix aquesta línia per habilitar $q.dialog
       ]
     },
 
@@ -217,8 +220,8 @@ export default defineConfig((/* ctx */) => {
        */
       extraScripts: [],
     },
-     bin: {
-      linuxAndroidStudio:'/dades/GuillermoMir/android-studio/bin/studio.sh'
+    bin: {
+      linuxAndroidStudio: '/dades/GuillermoMir/android-studio/bin/studio.sh'
     }
   }
 })

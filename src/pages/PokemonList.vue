@@ -1,76 +1,42 @@
 <template>
   <q-layout view="lHh Lpr lFf">
-    
-    <q-header elevated class="bg-primary text-white">
-      <q-toolbar>
-        <q-toolbar-title>Mi Pokédex (Lista)</q-toolbar-title>
-        
-        <q-btn flat round dense icon="add" to="/create" class="q-mr-sm">
-          <q-tooltip>Añadir Pokémon</q-tooltip>
-        </q-btn>
-
-        <q-btn flat round dense icon="logout" to="/login" />
-      </q-toolbar>
-    </q-header>
-
     <q-page-container>
-      <q-page class="q-pa-sm bg-grey-2">
+      <q-page class="q-pa-md bg-grey-1">
         
-        <h5 class="q-ml-sm text-weight-bold text-dark">Mis Pokémon</h5>
+        <div class="row items-center q-mb-md">
+          <div class="text-h4 text-primary text-weight-bold">Els meus Pokémon</div>
+          <q-space />
+          <q-btn color="negative" icon="logout" @click="logout" flat round />
+        </div>
 
-        <div class="row q-col-gutter-y-sm">
-          
-          <div 
-            class="col-12" 
-            v-for="(pokemon, index) in pokemons" 
-            :key="pokemon.id || index"
-          >
-            <q-card class="my-card hover-shadow" v-ripple>
-              <div class="row items-center no-wrap q-pa-sm">
-                
-                <div class="col-auto">
-                  <q-avatar size="60px" square class="bg-primary text-white rounded-borders text-h5 text-weight-bold">
-                    {{ pokemon.name ? pokemon.name.charAt(0).toUpperCase() : '?' }}
-                  </q-avatar>
-                </div>
+        <q-list bordered separator class="bg-white shadow-2 rounded-borders">
+          <q-item v-for="pokemon in pokemons" :key="pokemon.id" class="q-py-md">
+            <q-item-section avatar>
+              <q-avatar size="60px" rounded>
+                <img :src="pokemon.image || 'https://via.placeholder.com/150'">
+              </q-avatar>
+            </q-item-section>
 
-                <div class="col q-ml-md">
-                  <div class="text-subtitle1 text-weight-bold text-dark q-ma-none leading-none">
-                    {{ pokemon.name }}
-                  </div>
-                  <div class="text-caption text-grey-7">Generación {{ pokemon.generation }}</div>
-                </div>
+            <q-item-section>
+              <q-item-label class="text-h6 text-weight-bold">{{ pokemon.name }}</q-item-label>
+              <q-item-label caption>Tipus: {{ pokemon.type }} | Gen: {{ pokemon.generation }}</q-item-label>
+            </q-item-section>
 
-                <div class="col-auto q-mr-sm">
-                  <q-chip color="secondary" text-color="white" size="sm" dense>
-                    {{ pokemon.type }}
-                  </q-chip>
-                </div>
-
-                <div class="col-auto row no-wrap">
-                  <q-btn 
-                    flat round dense color="primary" icon="edit" class="q-mr-xs"
-                    :to="`/edit/${pokemon.id}`"
-                  />
-                  <q-btn 
-                    flat round dense color="negative" icon="delete"
-                    :to="`/delete/${pokemon.id}`"
-                  />
-                </div>
-
+            <q-item-section side>
+              <div class="row q-gutter-sm">
+                <q-btn flat round color="orange" icon="edit" @click="router.push(`/edit/${pokemon.id}`)" />
+                <q-btn flat round color="red" icon="delete" @click="confirmarEliminar(pokemon.id)" />
               </div>
-            </q-card>
-          </div>
-        </div>
+            </q-item-section>
+          </q-item>
 
-        <div v-if="pokemons.length === 0" class="text-center q-mt-xl text-grey-6">
-          <q-icon name="pets" size="4rem" class="q-mb-sm" />
-          <p>Aún no tienes ningún Pokémon. ¡Añade el primero!</p>
-          <q-btn color="primary" outline label="Añadir ahora" to="/create" icon="add" />
-        </div>
+          <q-item v-if="pokemons.length === 0" class="q-pa-xl text-center">
+            <q-item-section class="text-grey-6">Encara no tens cap Pokémon.</q-item-section>
+          </q-item>
+        </q-list>
 
         <q-page-sticky position="bottom-right" :offset="[18, 18]">
-          <q-btn fab icon="add" color="primary" to="/create" />
+          <q-btn fab icon="add" color="primary" @click="router.push('/create')" />
         </q-page-sticky>
 
       </q-page>
@@ -80,46 +46,47 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
+import { api } from 'src/boot/axios';
 
-const $q = useQuasar();
 const pokemons = ref([]);
+const router = useRouter();
+const $q = useQuasar();
 
-const obtenerPokemons = async () => {
-  $q.loading.show({ message: 'Cargando tu Pokédex...' });
-
+const cargarPokemons = async () => {
+  $q.loading.show();
   try {
-    // Detectamos si es capacitor para usar la IP o ruta relativa
-    const baseUrl = $q.platform.is.capacitor ? 'http://172.23.7.113:3000' : '';
-
-    const response = await fetch(`${baseUrl}/api/pokemons`, {
-      method: 'GET',
-      credentials: 'include',
-      headers: {
-        'Accept': 'application/json'
-      }
-    });
-
-    if (!response.ok) throw new Error(`Error ${response.status}`);
-
-    const data = await response.json();
-    pokemons.value = data;
-
-  } catch (error) {
-    console.error('Error:', error);
-    $q.notify({ type: 'negative', message: 'Fallo al cargar la lista' });
+    const response = await api.get('/api/pokemons');
+    pokemons.value = response.data;
+  } catch {
+    $q.notify({ type: 'negative', message: 'Error al carregar la llista' });
   } finally {
     $q.loading.hide();
   }
 };
 
-onMounted(() => {
-  obtenerPokemons();
-});
-</script>
+const confirmarEliminar = (id) => {
+  $q.dialog({
+    title: 'Eliminar Pokémon',
+    message: 'Estàs segur que vols eliminar-lo?',
+    cancel: true,
+    persistent: true
+  }).onOk(async () => {
+    try {
+      await api.delete(`/api/pokemons?id=${id}`);
+      $q.notify({ type: 'positive', message: 'Eliminat correctament' });
+      await cargarPokemons();
+    } catch {
+      $q.notify({ type: 'negative', message: 'No s\'ha pogut eliminar' });
+    }
+  });
+};
 
-<style scoped>
-.hover-shadow { transition: box-shadow 0.3s ease-in-out; }
-.hover-shadow:hover { box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important; }
-.leading-none { line-height: 1.2; }
-</style>
+const logout = () => {
+  localStorage.removeItem('auth_token');
+  router.push('/login');
+};
+
+onMounted(cargarPokemons);
+</script>

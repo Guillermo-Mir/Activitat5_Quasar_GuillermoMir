@@ -32,6 +32,7 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
+import { api } from 'src/boot/axios'; 
 
 const email = ref('');
 const password = ref('');
@@ -39,6 +40,7 @@ const router = useRouter();
 const $q = useQuasar();
 
 const iniciarSesion = async () => {
+  // 1. Validación básica
   if (!email.value || !password.value) {
     $q.notify({ type: 'warning', message: 'Falten camps per introduir' });
     return;
@@ -47,34 +49,41 @@ const iniciarSesion = async () => {
   $q.loading.show({ message: 'Validant credencials...' });
 
   try {
-    // Detectar si usamos IP (Móvil) o relativo (PC)
-    const baseUrl = $q.platform.is.capacitor ? 'http://172.23.7.113:3000' : '';
-    
-    const response = await fetch(`${baseUrl}/auth/login`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        email: email.value.trim(),
-        password: password.value.trim()
-      })
+    // 2. Petición al backend (Ruta sin /api según tu estructura de routes/auth/login.ts)
+    const response = await api.post('/auth/login', {
+      email: email.value.trim(),
+      password: password.value.trim()
     });
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.statusMessage || data.message || 'Error en les credencials');
+    // 3. GUARDAR EL TOKEN EN EL MÓVIL/NAVEGADOR
+    // Verificamos que el backend realmente envió el token
+    if (response.data && response.data.token) {
+      localStorage.setItem('auth_token', response.data.token);
+      console.log('Token guardado correctamente:', response.data.token);
+    } else {
+      console.warn('El backend no devolvió un token en la respuesta');
     }
 
-    $q.notify({ type: 'positive', message: '¡Login correcte!' });
-    router.push('/pokemonList');
+    $q.notify({ 
+      type: 'positive', 
+      message: '¡Login correcte!',
+      timeout: 1000 
+    });
+    
+    // 4. NAVEGACIÓN A LA LISTA
+    // Usamos await para asegurar que la navegación se procese
+    await router.push('/pokemonList');
 
   } catch (error) {
-    console.error('Error en el login:', error);
-    $q.notify({ type: 'negative', message: error.message || 'Error de connexió' });
+    console.error('Error detallado en el login:', error);
+    
+    // Si es un 404, revisa si la ruta en Nuxt es /auth/login o /api/auth/login
+    if (error.response?.status === 404) {
+      $q.notify({ type: 'negative', message: 'Error 404: Ruta no trobada al servidor' });
+    } else {
+      const mensajeError = error.response?.data?.message || error.response?.data?.statusMessage || 'Error en les credencials';
+      $q.notify({ type: 'negative', message: mensajeError });
+    }
   } finally {
     $q.loading.hide();
   }

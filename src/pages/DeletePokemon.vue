@@ -40,12 +40,10 @@ const $q = useQuasar();
 
 const nombrePokemon = ref('este Pokémon');
 
-// Función auxiliar para la URL base (IP para móvil, vacía para PC)
 const getBaseUrl = () => $q.platform.is.capacitor ? 'http://172.23.7.113:3000' : '';
 
 const cargarNombrePokemon = async () => {
   try {
-    // 🔥 CAMBIO: Usamos ?id= en lugar de /id
     const response = await fetch(`${getBaseUrl()}/api/pokemons?id=${route.params.id}`, {
       method: 'GET',
       credentials: 'include',
@@ -54,7 +52,6 @@ const cargarNombrePokemon = async () => {
     
     if (response.ok) {
       const data = await response.json();
-      // Si el backend devuelve un array, tomamos el primero, si no, el objeto directo
       const pokemonData = Array.isArray(data) ? data[0] : data;
       nombrePokemon.value = pokemonData.name; 
     }
@@ -67,7 +64,6 @@ const eliminarPokemon = async () => {
   $q.loading.show({ message: 'Eliminando...' });
 
   try {
-    // 🔥 CAMBIO: Usamos ?id= en lugar de /id
     const response = await fetch(`${getBaseUrl()}/api/pokemons?id=${route.params.id}`, {
       method: 'DELETE',
       credentials: 'include',
