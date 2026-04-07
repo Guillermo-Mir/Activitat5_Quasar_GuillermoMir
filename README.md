@@ -51,7 +51,7 @@ Aquest projecte està compost per dues entitats separades que es comuniquen mitj
 1. Instal·la les dependències: `npm install`.
 2. Configura el fitxer `.env` amb la clau secreta per al JWT (`JWT_SECRET`).
 3. Actualitza l'esquema de la base de dades: `npx drizzle-kit push`.
-4. Arrenca el servidor: `npm run dev`.
+4. Arrenca el servidor: `npm run dev -- --host`.
 
 ### Frontend (Quasar)
 1. Instal·la les dependències: `npm install`.
